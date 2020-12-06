@@ -42,10 +42,13 @@ const Home: React.FC = () => {
 
       files.forEach((file, index) => {
         const reader = new FileReader()
-        reader.fileName = file.webkitRelativePath
-        reader.last = index === lastIndex
 
         reader.onload = e => {
+          const fileName = file.webkitRelativePath
+            .replace(/.(rpgmvp)$/, '.png')
+            .replace(/.(rpgmvm)$/, '.m4a')
+            .replace(/.(rpgmvo)$/, '.ogg')
+
           setProgressStatus('decrypting')
           setProgress(progress + toIncrement)
 
@@ -62,19 +65,11 @@ const Home: React.FC = () => {
             view.setUint8(i, byteArray[i])
           }
 
-          const fileName = e.target.fileName
-            .replace(/.(rpgmvp)$/, '.png')
-            .replace(/.(rpgmvm)$/, '.m4a')
-            .replace(/.(rpgmvo)$/, '.ogg')
-
           zip.file(fileName, new Blob([arrayBuffer]))
-        }
 
-        reader.readAsArrayBuffer(file)
-        reader.onloadend = e => {
-          setProgressStatus('zipping')
+          if (index === lastIndex) {
+            setProgressStatus('zipping')
 
-          if (e.target.last) {
             console.log('done, zipping files', blobs.length, progress)
 
             zip
@@ -93,6 +88,8 @@ const Home: React.FC = () => {
               })
           }
         }
+
+        reader.readAsArrayBuffer(file)
       })
     }
   }
@@ -141,8 +138,7 @@ const Home: React.FC = () => {
               style={{ display: 'none' }}
               id="fileUpload"
               type="file"
-              webkitdirectory=""
-              mozdirectory=""
+              {...{ webkitdirectory: '', mozdirectory: '', directory: '' }}
               onChange={e => handleFiles(e.target.files)}
               accept=".json,.rpgmvp,.rpgmvm,.rpgmvo"
             />
