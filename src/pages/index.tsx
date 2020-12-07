@@ -10,15 +10,25 @@ import {
 } from '../styles/pages/Home'
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
+import CheckBox from '../components/Checkbox'
+
+interface File1 extends File {
+  webkitRelativePath?: string
+}
 
 const Home: React.FC = () => {
   const [system, setSystem] = useState([])
   const [files, setFiles] = useState([])
   const [progress, setProgress] = useState(0.0)
+  const [removePath, setRemovePath] = useState('false')
+  const [includeAudio] = useState('true')
+  const [includeVideo] = useState('true')
+  const [includeImage] = useState('true')
   const [progressStatus, setProgressStatus] = useState('')
   let encryptKey = ''
 
   function handleFiles(e: FileList): void {
+    console.log(removePath, includeAudio, includeImage, includeVideo)
     setProgress(0)
     setProgressStatus('ready')
     if (e) {
@@ -40,14 +50,26 @@ const Home: React.FC = () => {
       const toIncrement = 1 + 9 / lastIndex
       const zip = new JSZip()
 
-      files.forEach((file, index) => {
+      files.forEach((file: File1 , index) => {
+        if ((file.webkitRelativePath.endsWith('rpgmvp') && includeImage === 'false')
+        || (file.webkitRelativePath.endsWith('rpgmvm') && includeAudio === 'false')
+        || (file.webkitRelativePath.endsWith('rpgmvo') && includeVideo === 'false')) {
+            return;
+        }
+
         const reader = new FileReader()
 
         reader.onload = e => {
-          const fileName = file.webkitRelativePath
+          let fileName: string = file.webkitRelativePath
             .replace(/.(rpgmvp)$/, '.png')
             .replace(/.(rpgmvm)$/, '.m4a')
             .replace(/.(rpgmvo)$/, '.ogg')
+
+          if (removePath === 'true') {
+            console.log(fileName)
+            fileName = fileName.split('/')[fileName.split('/').length - 1]
+            console.log(fileName)
+          }
 
           setProgressStatus('decrypting')
           setProgress(progress + toIncrement)
@@ -86,9 +108,8 @@ const Home: React.FC = () => {
                 setProgress(0)
                 setProgressStatus('completed')
               })
+            }
           }
-        }
-
         reader.readAsArrayBuffer(file)
       })
     }
@@ -96,7 +117,6 @@ const Home: React.FC = () => {
 
   function submitFiles(e: FormEvent): void {
     e.preventDefault()
-    console.log(system, files.length)
     findEncryptionCode()
   }
 
@@ -121,6 +141,10 @@ const Home: React.FC = () => {
     }
 
     reader.readAsText(system[0])
+  }
+
+  function test(e: any) {
+    console.log(e.target.value)
   }
 
   return (
@@ -149,12 +173,18 @@ const Home: React.FC = () => {
               <span>Decrypt</span>
             </Button>
 
-            <div>files found: {files.length}</div>
+            <div>files: {files.length}</div>
             <ProgressBar>
               <Filler style={{ width: `${progress}%` }}>
                 <ProgressStatus>{progressStatus}</ProgressStatus>
               </Filler>
             </ProgressBar>
+
+            <CheckBox label="Remove path" value={removePath} onChangeValue={e => test(e)}></CheckBox>
+            <CheckBox label="Do not decrypt audio" value={includeAudio}></CheckBox>
+            <CheckBox label="Do not decrypt video" value={includeVideo}></CheckBox>
+            <CheckBox label="Do not decrypt image" value={includeImage}></CheckBox>
+
           </form>
         </div>
       </main>

@@ -80,3 +80,27 @@ export const InputLabel = styled.label`
     color: ${props => props.theme.colors.background};
   }
 `
+export const ToggleLabel = styled.label`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin: 1em;
+
+  input {
+    display: none;
+  }
+
+  input:checked + svg {
+    fill: #0EC63C
+  }
+
+  svg {
+    cursor: pointer;
+    margin-left: 1em;
+    transition: .2s;
+
+    circle {
+      transition: .2s;
+    }
+  }
+`
