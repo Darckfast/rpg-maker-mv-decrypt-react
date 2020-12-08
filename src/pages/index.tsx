@@ -19,11 +19,12 @@ interface File1 extends File {
 const Home: React.FC = () => {
   const [system, setSystem] = useState([])
   const [files, setFiles] = useState([])
-  const [progress, setProgress] = useState(0.0)
-  const [removePath, setRemovePath] = useState('false')
-  const [includeAudio] = useState('true')
-  const [includeVideo] = useState('true')
-  const [includeImage] = useState('true')
+  const [filesDecrypted, setFilesDecrypted] = useState(0)
+  const [progress, setProgress] = useState(0)
+  const [removePath, setRemovePath] = useState(false)
+  const [includeAudio, setIncludeAudio] = useState(true)
+  const [includeVideo, setIncludeVideo] = useState(true)
+  const [includeImage, setIncludeImage] = useState(true)
   const [progressStatus, setProgressStatus] = useState('')
   let encryptKey = ''
 
@@ -32,7 +33,6 @@ const Home: React.FC = () => {
     setProgress(0)
     setProgressStatus('ready')
     if (e) {
-      console.log(files.length)
       const filesArray = Array.from(e)
 
       setFiles(filesArray.filter((file: File) => file.name.endsWith('.rpgmvp')))
@@ -47,14 +47,17 @@ const Home: React.FC = () => {
 
       const blobs = []
       const lastIndex = files.length - 1
-      const toIncrement = 1 + 9 / lastIndex
+      const toIncrement = 2 + 10 / lastIndex
       const zip = new JSZip()
+      let totalDecrypted = 0
 
-      files.forEach((file: File1 , index) => {
-        if ((file.webkitRelativePath.endsWith('rpgmvp') && includeImage === 'false')
-        || (file.webkitRelativePath.endsWith('rpgmvm') && includeAudio === 'false')
-        || (file.webkitRelativePath.endsWith('rpgmvo') && includeVideo === 'false')) {
-            return;
+      files.forEach((file: File1, index) => {
+        if (
+          (file.webkitRelativePath.endsWith('rpgmvp') && !includeImage) ||
+          (file.webkitRelativePath.endsWith('rpgmvm') && !includeAudio) ||
+          (file.webkitRelativePath.endsWith('rpgmvo') && !includeVideo)
+        ) {
+          return
         }
 
         const reader = new FileReader()
@@ -65,14 +68,9 @@ const Home: React.FC = () => {
             .replace(/.(rpgmvm)$/, '.m4a')
             .replace(/.(rpgmvo)$/, '.ogg')
 
-          if (removePath === 'true') {
-            console.log(fileName)
+          if (removePath) {
             fileName = fileName.split('/')[fileName.split('/').length - 1]
-            console.log(fileName)
           }
-
-          setProgressStatus('decrypting')
-          setProgress(progress + toIncrement)
 
           let arrayBuffer: ArrayBuffer = e.target.result as ArrayBuffer
 
@@ -88,6 +86,9 @@ const Home: React.FC = () => {
           }
 
           zip.file(fileName, new Blob([arrayBuffer]))
+
+          setFilesDecrypted(++totalDecrypted)
+          setProgressStatus('decrypting')
 
           if (index === lastIndex) {
             setProgressStatus('zipping')
@@ -108,8 +109,13 @@ const Home: React.FC = () => {
                 setProgress(0)
                 setProgressStatus('completed')
               })
-            }
           }
+        }
+
+        reader.onprogress = () => {
+          setProgress(progress + toIncrement)
+        }
+
         reader.readAsArrayBuffer(file)
       })
     }
@@ -143,10 +149,6 @@ const Home: React.FC = () => {
     reader.readAsText(system[0])
   }
 
-  function test(e: any) {
-    console.log(e.target.value)
-  }
-
   return (
     <Container>
       <Head>
@@ -167,24 +169,40 @@ const Home: React.FC = () => {
               accept=".json,.rpgmvp,.rpgmvm,.rpgmvo"
             />
             <InputLabel htmlFor="fileUpload">
-              <span>Select www/ dir</span>
+              <span>Select www dir</span>
             </InputLabel>
             <Button type="submit" disabled={files.length === 0}>
               <span>Decrypt</span>
             </Button>
 
-            <div>files: {files.length}</div>
+            <div>files found: {files.length}</div>
+            <div>files decrypted: {filesDecrypted}</div>
             <ProgressBar>
               <Filler style={{ width: `${progress}%` }}>
                 <ProgressStatus>{progressStatus}</ProgressStatus>
               </Filler>
             </ProgressBar>
 
-            <CheckBox label="Remove path" value={removePath} onChangeValue={e => test(e)}></CheckBox>
-            <CheckBox label="Do not decrypt audio" value={includeAudio}></CheckBox>
-            <CheckBox label="Do not decrypt video" value={includeVideo}></CheckBox>
-            <CheckBox label="Do not decrypt image" value={includeImage}></CheckBox>
-
+            <CheckBox
+              label="Remove path"
+              value={removePath}
+              onChangeValue={e => setRemovePath(e.target.checked)}
+            ></CheckBox>
+            <CheckBox
+              label="Decrypt audio"
+              value={includeAudio}
+              onChangeValue={e => setIncludeAudio(e.target.checked)}
+            ></CheckBox>
+            <CheckBox
+              label="Decrypt video"
+              value={includeVideo}
+              onChangeValue={e => setIncludeVideo(e.target.checked)}
+            ></CheckBox>
+            <CheckBox
+              label="Decrypt image"
+              value={includeImage}
+              onChangeValue={e => setIncludeImage(e.target.checked)}
+            ></CheckBox>
           </form>
         </div>
       </main>
