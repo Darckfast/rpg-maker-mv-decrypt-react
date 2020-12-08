@@ -91,16 +91,22 @@ export const ToggleLabel = styled.label`
   }
 
   input:checked + svg {
-    fill: #0EC63C
+    fill: #0ec63c;
   }
 
   svg {
     cursor: pointer;
     margin-left: 1em;
-    transition: .2s;
+    transition: 0.2s;
+
+    fill: transparent;
 
     circle {
-      transition: .2s;
+      transition: 0.2s;
+    }
+
+    &:hover {
+      fill: rgba(20, 255, 132, 0.4);
     }
   }
 `
