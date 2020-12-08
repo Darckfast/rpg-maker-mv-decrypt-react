@@ -1,7 +1,4 @@
-# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
-
-name: Node.js CI
+name: React + Yarn CI
 
 on:
   push:
@@ -16,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [12.x, 14.x]
+        node-version: [14.x]
 
     steps:
     - uses: actions/checkout@v2
@@ -25,5 +22,8 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm i -g yarn
+      name: Installing Yarn
     - run: yarn install --frozen-lockfile
+      name: Installing dependencies
     - run: yarn run build
+      name: Running build
