@@ -21,12 +21,17 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
+
     - run: npm i -g yarn
       name: Installing Yarn
+
     - run: yarn install --frozen-lockfile
       name: Installing dependencies
+
+    - run: yarn lint
+      name: Checking linting
+
     - run: yarn run build
       name: Running build
 
-  publish:
-    runs-on: ubuntu-latest
+
