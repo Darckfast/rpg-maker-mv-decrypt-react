@@ -39,9 +39,3 @@ jobs:
     - run: yarn run build
       name: Running build
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: static-app
-        path: out/
-
