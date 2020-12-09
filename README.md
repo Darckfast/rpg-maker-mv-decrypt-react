@@ -11,4 +11,6 @@ This is a small project made with [React](https://reactjs.org/), [NextJS](https:
 
 ## How to use
 
-Head over the [releases](https://github.com/Darckfast/rpg-maker-mv-decrypt-react/releases) page and download the latest `static_app.zip`. After unzip it
+Head over the [releases](https://github.com/Darckfast/rpg-maker-mv-decrypt-react/releases) page and download the latest `static_app.zip`. After unzipping it, run the `index.html` on a browser
+
+Then all will be need is to click on `Select www dir` and make the *upload* (it will just load the file on), then click on `Decrypt`
