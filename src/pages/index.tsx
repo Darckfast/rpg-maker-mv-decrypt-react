@@ -152,7 +152,7 @@ const Home: React.FC = () => {
   return (
     <Container>
       <Head>
-        <title>Create Next App</title>
+        <title>RPG MV decrypt</title>
       </Head>
 
       <main>
