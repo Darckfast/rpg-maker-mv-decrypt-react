@@ -11,9 +11,16 @@ import {
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import CheckBox from '../components/Checkbox'
+import { resolve } from 'path'
+import { rejects } from 'assert'
 
 interface File1 extends File {
   webkitRelativePath?: string
+}
+
+interface FileDecrypt {
+  arrayBuffer: ArrayBuffer
+  fileName: string
 }
 
 const Home: React.FC = () => {
@@ -28,14 +35,22 @@ const Home: React.FC = () => {
   const [progressStatus, setProgressStatus] = useState('')
   let encryptKey = ''
 
-  function handleFiles(e: FileList): void {
+  function handleFiles(fileList: FileList): void {
     console.log(removePath, includeAudio, includeImage, includeVideo)
     setProgress(0)
     setProgressStatus('ready')
-    if (e) {
-      const filesArray = Array.from(e)
 
-      setFiles(filesArray.filter((file: File) => file.name.endsWith('.rpgmvp')))
+    if (fileList) {
+      const filesArray = Array.from(fileList)
+
+      setFiles(
+        filesArray.filter(
+          (file: File) =>
+            (file.name.endsWith('rpgmvp') && includeImage) ||
+            (file.name.endsWith('rpgmvm') && includeAudio) ||
+            (file.name.endsWith('rpgmvo') && includeVideo)
+        )
+      )
       setSystem(filesArray.filter((file: File) => file.name === 'System.json'))
     }
   }
@@ -45,10 +60,40 @@ const Home: React.FC = () => {
       setProgress(1)
       setProgressStatus('reading')
 
-      const blobs = []
-      const lastIndex = files.length - 1
-      const toIncrement = 2 + 10 / lastIndex
-      const zip = new JSZip()
+      decryptAsync(percent =>
+        setProgress(progress + (percent - progress) * 20)
+      ).then(results => {
+        const zip = new JSZip()
+
+        results.forEach(result => {
+          zip.file(result.fileName, new Blob([result.arrayBuffer]))
+        })
+
+        zip
+          .generateAsync({ type: 'blob', streamFiles: true }, metadata => {
+            const prog = metadata.percent - progress
+            if (prog > 0) {
+              setProgress(progress + prog)
+            }
+          })
+          .then(content => {
+            // saveAs(content, 'Extract.zip')
+          })
+          .finally(() => {
+            setProgress(0)
+            setProgressStatus('completed')
+          })
+      })
+    }
+  }
+
+  async function decryptAsync(
+    checkProgress: (prog: number) => void
+  ): Promise<[FileDecrypt?]> {
+    return new Promise(resolve => {
+      const parsedKey = encryptKey.split(/(.{2})/).filter(Boolean)
+      const totalToDecrypt = files.length - 1
+      const arrayBuffers: [FileDecrypt?] = []
       let totalDecrypted = 0
 
       files.forEach((file: File1, index) => {
@@ -57,12 +102,17 @@ const Home: React.FC = () => {
           (file.webkitRelativePath.endsWith('rpgmvm') && !includeAudio) ||
           (file.webkitRelativePath.endsWith('rpgmvo') && !includeVideo)
         ) {
+          if (index === totalToDecrypt + 1) {
+            resolve(arrayBuffers)
+            // done
+          }
+
           return
         }
 
         const reader = new FileReader()
 
-        reader.onload = e => {
+        reader.onload = fileList => {
           let fileName: string = file.webkitRelativePath
             .replace(/.(rpgmvp)$/, '.png')
             .replace(/.(rpgmvm)$/, '.m4a')
@@ -72,12 +122,11 @@ const Home: React.FC = () => {
             fileName = fileName.split('/')[fileName.split('/').length - 1]
           }
 
-          let arrayBuffer: ArrayBuffer = e.target.result as ArrayBuffer
+          let arrayBuffer: ArrayBuffer = fileList.target.result as ArrayBuffer
 
           arrayBuffer = arrayBuffer.slice(16, arrayBuffer.byteLength)
 
           const view = new DataView(arrayBuffer)
-          const parsedKey = encryptKey.split(/(.{2})/).filter(Boolean)
           const byteArray = new Uint8Array(arrayBuffer)
 
           for (let i = 0; i < 16; i++) {
@@ -85,52 +134,35 @@ const Home: React.FC = () => {
             view.setUint8(i, byteArray[i])
           }
 
-          zip.file(fileName, new Blob([arrayBuffer]))
+          arrayBuffers.push({ fileName, arrayBuffer })
+
+          if (checkProgress) {
+            checkProgress(totalDecrypted / totalToDecrypt)
+          }
 
           setFilesDecrypted(++totalDecrypted)
-          setProgressStatus('decrypting')
 
-          if (index === lastIndex) {
-            setProgressStatus('zipping')
-
-            console.log('done, zipping files', blobs.length, progress)
-
-            zip
-              .generateAsync({ type: 'blob', streamFiles: true }, metadata => {
-                const prog = metadata.percent - progress
-                if (prog > 0) {
-                  setProgress(progress + prog)
-                }
-              })
-              .then(content => {
-                saveAs(content, 'Extract.zip')
-              })
-              .finally(() => {
-                setProgress(0)
-                setProgressStatus('completed')
-              })
+          if (index === totalToDecrypt) {
+            resolve(arrayBuffers)
+            // done
           }
-        }
-
-        reader.onprogress = () => {
-          setProgress(progress + toIncrement)
         }
 
         reader.readAsArrayBuffer(file)
       })
-    }
+    })
   }
 
-  function submitFiles(e: FormEvent): void {
-    e.preventDefault()
+  function submitFiles(fileList: FormEvent): void {
+    fileList.preventDefault()
     findEncryptionCode()
   }
 
   function findEncryptionCode(): void {
     const reader = new FileReader()
 
-    reader.onload = e => {
-      const content = JSON.parse(e.target.result.toString())
+    reader.onload = fileList => {
+      const content = JSON.parse(fileList.target.result.toString())
 
       for (const key in content) {
         if (Object.prototype.hasOwnProperty.call(content, key)) {
@@ -165,18 +197,20 @@ const Home: React.FC = () => {
               id="fileUpload"
               type="file"
               {...{ webkitdirectory: '', mozdirectory: '', directory: '' }}
-              onChange={e => handleFiles(e.target.files)}
+              onChange={fileList => handleFiles(fileList.target.files)}
               accept=".json,.rpgmvp,.rpgmvm,.rpgmvo"
             />
             <InputLabel htmlFor="fileUpload">
               <span>Select www dir</span>
             </InputLabel>
+
             <Button type="submit" disabled={files.length === 0}>
               <span>Decrypt</span>
             </Button>
 
             <div>files found: {files.length}</div>
             <div>files decrypted: {filesDecrypted}</div>
+
             <ProgressBar>
               <Filler style={{ width: `${progress}%` }}>
                 <ProgressStatus>{progressStatus}</ProgressStatus>
@@ -186,22 +220,28 @@ const Home: React.FC = () => {
             <CheckBox
               label="Remove path"
               value={removePath}
-              onChangeValue={e => setRemovePath(e.target.checked)}
+              onChangeValue={fileList => setRemovePath(fileList.target.checked)}
             ></CheckBox>
             <CheckBox
               label="Decrypt audio"
               value={includeAudio}
-              onChangeValue={e => setIncludeAudio(e.target.checked)}
+              onChangeValue={fileList =>
+                setIncludeAudio(fileList.target.checked)
+              }
             ></CheckBox>
             <CheckBox
               label="Decrypt video"
               value={includeVideo}
-              onChangeValue={e => setIncludeVideo(e.target.checked)}
+              onChangeValue={fileList =>
+                setIncludeVideo(fileList.target.checked)
+              }
             ></CheckBox>
             <CheckBox
               label="Decrypt image"
               value={includeImage}
-              onChangeValue={e => setIncludeImage(e.target.checked)}
+              onChangeValue={fileList =>
+                setIncludeImage(fileList.target.checked)
+              }
             ></CheckBox>
           </form>
         </div>
