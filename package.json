@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build && next export && find out -type f -exec sed -i 's/ src=\"/ src=\"./g' {} + && sed -i 's/rel=\"preload\" href=\"/rel=\"preload\" href=\"./g' out/index.html",
-    "start": "next start"
+    "start": "next start",
+    "lint": "eslint src --ext ts,tsx"
   },
   "dependencies": {
     "file-saver": "^2.0.5",

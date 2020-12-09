@@ -1,10 +1,10 @@
-import React from 'react'
+import React, { ChangeEvent } from 'react'
 import { ToggleLabel } from '../styles/pages/Home'
 
 interface CheckBoxProps {
   label?: string
   value: boolean
-  onChangeValue?: any
+  onChangeValue?: (e: ChangeEvent<HTMLInputElement>) => void
 }
 
 const CheckBox: React.FC<CheckBoxProps> = props => {

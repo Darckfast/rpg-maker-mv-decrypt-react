@@ -27,3 +27,6 @@ jobs:
       name: Installing dependencies
     - run: yarn run build
       name: Running build
+
+  publish:
+    runs-on: ubuntu-latest
