@@ -77,7 +77,7 @@ const Home: React.FC = () => {
             }
           })
           .then(content => {
-            // saveAs(content, 'Extract.zip')
+            saveAs(content, 'Extract.zip')
           })
           .finally(() => {
             setProgress(0)
