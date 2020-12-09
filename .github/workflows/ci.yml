@@ -1,0 +1,44 @@
+name: React + Yarn CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    steps:
+    - uses: actions/checkout@v2
+      #with:
+      #  fetch-depth: 0
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - run: npm i -g yarn
+      name: Installing Yarn
+
+    - run: yarn install --frozen-lockfile
+      name: Installing dependencies
+
+    - run: yarn lint
+      name: Checking linting
+
+    #- name: Checking commit message
+    #  uses: wagoid/commitlint-github-action@v2
+    #  with:
+    #    firstParent: true
+       
+    - run: yarn run build
+      name: Running build
+
+

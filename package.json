@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build && next export && find out -type f -exec sed -i 's/ src=\"/ src=\"./g' {} + && sed -i 's/rel=\"preload\" href=\"/rel=\"preload\" href=\"./g' out/index.html",
-    "start": "next start"
+    "start": "next start",
+    "lint": "eslint src --ext ts,tsx"
   },
   "dependencies": {
     "file-saver": "^2.0.5",
@@ -16,6 +17,8 @@
     "styled-components": "^5.2.1"
   },
   "devDependencies": {
+    "@commitlint/cli": "^11.0.0",
+    "@commitlint/config-conventional": "^11.0.0",
     "@types/file-saver": "^2.0.1",
     "@types/jszip": "^3.4.1",
     "@types/node": "^14.14.10",
