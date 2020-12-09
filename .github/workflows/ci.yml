@@ -33,11 +33,11 @@ jobs:
     - run: yarn lint
       name: Checking linting
 
-    - name: Checking commit message
-      uses: wagoid/commitlint-github-action@v2
-      with:
-        firstParent: true
-
+    #- name: Checking commit message
+    #  uses: wagoid/commitlint-github-action@v2
+    #  with:
+    #    firstParent: true
+       
     - run: yarn run build
       name: Running build
 
