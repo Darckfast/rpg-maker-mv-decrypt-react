@@ -99,14 +99,8 @@ export const ToggleLabel = styled.label`
     margin-left: 1em;
     transition: 0.2s;
 
-    fill: transparent;
-
     circle {
       transition: 0.2s;
-    }
-
-    &:hover {
-      fill: rgba(20, 255, 132, 0.4);
     }
   }
 `
