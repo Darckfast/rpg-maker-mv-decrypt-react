@@ -57,7 +57,6 @@ const Home: React.FC = () => {
 
   function decryptFiles() {
     if (files.length > 0) {
-      setProgress(1)
       setProgressStatus('reading')
 
       decryptAsync(percent =>
