@@ -1,8 +1,6 @@
-name: React + Yarn CI
+name: PR CI
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -17,8 +15,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-      #with:
-      #  fetch-depth: 0
+      with:
+        fetch-depth: 0
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
       with:
@@ -33,12 +31,11 @@ jobs:
     - run: yarn lint
       name: Checking linting
 
-    #- name: Checking commit message
-    #  uses: wagoid/commitlint-github-action@v2
-    #  with:
-    #    firstParent: true
-       
+    - name: Checking commit message
+      uses: wagoid/commitlint-github-action@v2
+      with:
+        firstParent: true
+
     - run: yarn run build
       name: Running build
-
 
